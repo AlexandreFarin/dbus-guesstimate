@@ -1,4 +1,5 @@
 dash
 plotly
-databricks-connect>=13.1.0
 python-dotenv
+databricks-sql-connector
+dash-bootstrap-components
