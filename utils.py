@@ -22,7 +22,7 @@ def get_dataset(table_name):
             columns = [desc[0] for desc in cursor.description] 
     return pd.DataFrame(result, columns=columns)
 
-def score_model(age, active_users, industry, etl_pct, data_volume, jobs, delta, ml_pct, sql_pct, serverless):
+def score_model(age, active_users, industry, etl_pct, data_volume, jobs, delta, ml_pct, model_serving, sql_pct, serverless):
     headers = {
        "Authorization": f'Bearer {os.getenv("token")}',
        "Content-Type": "application/json",
@@ -34,10 +34,11 @@ def score_model(age, active_users, industry, etl_pct, data_volume, jobs, delta, 
           "pct_etl",
           "pct_edw",
           "pct_jobs",
-          "DailyGbProcessCat",
+          "DailyGbProcessCatOrd",
           "DeltaPercent",
           "activeUsers",
-          "ServerlessPercent",
+          "ServerlessSqlPercent",
+          "ModelServing",
           "Industry",
           "customerAgeMonths"
         ],
@@ -51,6 +52,7 @@ def score_model(age, active_users, industry, etl_pct, data_volume, jobs, delta, 
             delta,
             active_users,
             serverless,
+            model_serving,
             industry,
             age
           ]
