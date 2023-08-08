@@ -54,12 +54,16 @@ app.layout = html.Div(
        className="d-grid gap-2 col-4 mx-auto"
     ),
     dbc.Row(
+       html.H6(style={'text-align':'center'},id="interval-confidence"),
+       className="d-grid gap-2 col-4 mx-auto"
+    ),
+    dbc.Row(
         [
           dbc.Col(
               html.Div([
                   html.H4("Customer", className="card-header"),
                   html.Div(
-                     html.H6("Tell me a bit more about the customer", className="card-subtitle text-muted"),
+                     html.H6("The one we are obessed about", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
                   html.Div(html.Img(src='assets/company.svg'),
@@ -68,13 +72,13 @@ app.layout = html.Div(
                       html.Div(
                         [
                           html.P("Uses Databricks since . months"),
-                          dbc.Input(type="number", min=0, max=200, step=1, value=df['customerAgeMonths'].median(), id="age", className="form-control"),
+                          dbc.Input(type="number", min=0, max=200, step=1, value=3, id="age", className="form-control"),
                         ],
                         className="mb-3"),
                       html.Div(
                         [
                           html.P("Number of Databricks users (all personas)"),
-                          dbc.Input(type="number", min=0, max=1000, step=1, value=df['activeUsers'].median(), id="active_users", className="form-control"),
+                          dbc.Input(type="number", min=0, max=100000, step=1, value=5, id="active_users", className="form-control"),
                         ],
                         className="mb-3"),
                       html.Div(
@@ -155,7 +159,7 @@ app.layout = html.Div(
               html.Div([
                   html.H4("Data Science / ML", className="card-header"),
                   html.Div(
-                     html.H6("pip install sklearn", className="card-subtitle text-muted"),
+                     html.H6("pip install sklearn, dolly, llm", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
                   html.Div(html.Img(src='assets/data-science.svg'),
@@ -175,7 +179,7 @@ app.layout = html.Div(
                                   {"label": "Yes", "value": 1},
                                   {"label": "No", "value": 0},
                               ],
-                              value=0, id="model_serving"
+                              value=0, id="model_serving", inline=True
                           ),
                         ],
                       className="mb-3")
@@ -241,8 +245,30 @@ def predict(n_clicks, age, active_users, industry, etl_pct, data_volume, jobs, d
         return ""
     else:
         dbus = score_model(age, active_users, industry, etl_pct/100, data_volume, jobs/100, delta/100, ml_pct/100, model_serving, sql_pct/100, serverless/100)
-        return f"{max(200, round(dbus/10)*10)} DBUs / month"
-
+        return f"{max(200, round(dbus[0]/10)*10)} DBUs / month"
+@app.callback(
+      Output('interval-confidence', 'children'),
+      [
+        Input('prediction-button', 'n_clicks'),
+        State('age', 'value'),
+        State('active_users', 'value'),
+        State('industry', 'value'),
+        State('etl_pct', 'value'),
+        State('data_volume', 'value'),
+        State('jobs', 'value'),
+        State('delta', 'value'),
+        State('ml_pct', 'value'),
+        State('model_serving', 'value'),
+        State('sql_pct', 'value'),
+        State('serverless', 'value')
+      ]
+    )
+def confidence_interval(n_clicks, age, active_users, industry, etl_pct, data_volume, jobs, delta, ml_pct, model_serving, sql_pct, serverless):
+    if n_clicks == 0:
+        return ""
+    else:
+        dbus = score_model(age, active_users, industry, etl_pct/100, data_volume, jobs/100, delta/100, ml_pct/100, model_serving, sql_pct/100, serverless/100)
+        return f"90% confidence interval: [{max(0, round(dbus[1]/10)*10)} - {round(dbus[2]/10)*10}]"
 @app.callback(
       Output('etl_pct', 'invalid'),
       Output('ml_pct', 'invalid'),

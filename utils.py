@@ -59,11 +59,28 @@ def score_model(age, active_users, industry, etl_pct, data_volume, jobs, delta, 
         ]
       }
     }
-    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/dus-guesstimate/invocations'
-    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=20)
+    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/Guestimator/invocations'
+    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
     
     if response.status_code != 200:
         raise Exception(f"Request failed with status {response.status_code}, {response.text}")
     
     dbus = response.json()["predictions"][0]
-    return int(dbus)
+
+    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/GuestimatorMinimum/invocations'
+    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
+    
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
+    
+    dbus_min = response.json()["predictions"][0]
+
+    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/GuestimatorMaximum/invocations'
+    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
+    
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
+    
+    dbus_max = response.json()["predictions"][0]
+
+    return (int(dbus),int(dbus_min),int(dbus_max))
