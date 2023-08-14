@@ -84,3 +84,80 @@ def score_model(age, active_users, industry, etl_pct, data_volume, jobs, delta, 
     dbus_max = response.json()["predictions"][0]
 
     return (int(dbus),int(dbus_min),int(dbus_max))
+
+def call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml,pct_de,pct_bi,pct_automation,DailyGbProcessCatOrd,DeltaPercent,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu,pct_photon,pct_streaming,DLTPercent,ServerlessSqlPercent):
+    headers = {
+       "Authorization": f'Bearer {os.getenv("token")}',
+       "Content-Type": "application/json",
+    }
+    input_data = {
+      "dataframe_split": {
+        "columns": [
+          "cloudType",
+          "marketSegment",
+          "industryVertical",
+          "customerStatus",
+          "pct_ml",
+          "pct_de",
+          "pct_bi",
+          "pct_automation",
+          "DailyGbProcessCatOrd",
+          "DeltaPercent",
+          "nUsers",
+          "model_serving_bin",
+          "customerAgeQuarters",
+          "pct_gpu",
+          "pct_photon",
+          "pct_streaming",
+          "DLTPercent",
+          "ServerlessSqlPercent"
+        ],
+        "data": [
+          [
+            cloudType,
+            marketSegment,
+            industryVertical,
+            customerStatus,
+            pct_ml,
+            pct_de,
+            pct_bi,
+            pct_automation,
+            DailyGbProcessCatOrd,
+            DeltaPercent,
+            nUsers,
+            model_serving_bin,
+            customerAgeQuarters,
+            pct_gpu,
+            pct_photon,
+            pct_streaming,
+            DLTPercent,
+            ServerlessSqlPercent
+          ]
+        ]
+      }
+    }
+    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/Guestimate/invocations'
+    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
+    
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
+    
+    dollars = response.json()["predictions"][0]
+
+    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/GuestimateMinimum/invocations'
+    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
+    
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
+    
+    dollars_min = response.json()["predictions"][0]
+
+    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/GuestimateMaximum/invocations'
+    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
+    
+    if response.status_code != 200:
+        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
+    
+    dollars_max = response.json()["predictions"][0]
+
+    return (int(dollars),int(dollars_min),int(dollars_max))
