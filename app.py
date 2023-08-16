@@ -1,6 +1,6 @@
+import pandas as pd
 import dash_bootstrap_components as dbc
-import time
-from dash import Dash, html, dcc, Output, Input, State
+from dash import Dash, html, dcc, Output, Input, State, dash_table
 from utils import get_dataset, call_models
 
 df = get_dataset("customers_last_month")
@@ -52,15 +52,7 @@ app.layout = html.Div(
       className="d-grid gap-2 col-6 mx-auto"
     ),
     html.Br(),  
-    dbc.Row(
-       html.H3(style={'text-align':'center'},id="dollars-output"),
-       className="d-grid gap-2 col-4 mx-auto"
-    ),
-    dbc.Row(
-       html.H6(style={'text-align':'center'},id="dollars-interval-confidence"),
-       className="d-grid gap-2 col-4 mx-auto"
-    ),
-    dbc.Row(className="d-grid gap-2 col-6 mx-auto", id="salesforce-row"),
+    dbc.Row(id="predict-section", className="d-grid gap-2 col-4 mx-auto"),
     dbc.Row(
         [
           dbc.Col(
@@ -319,9 +311,8 @@ app.layout = html.Div(
     ),
   ]
 )
-
 @app.callback(
-      Output('dollars-output', 'children'),
+      Output('predict-section', 'children'),
       [
         Input('prediction-button', 'n_clicks'),
         State('cloudType', 'value'),
@@ -344,70 +335,46 @@ app.layout = html.Div(
         State('ServerlessSqlPercent', 'value')
       ]
     )
-def predict_dollars(n_clicks,cloudType,marketSegment,industryVertical,customerStatus,pct_ml,pct_de,pct_bi,pct_automation,DailyGbProcessCatOrd,DeltaPercent,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu,pct_photon,pct_streaming,DLTPercent,ServerlessSqlPercent):
+def predict(n_clicks,cloudType,marketSegment,industryVertical,customerStatus,pct_ml,pct_de,pct_bi,pct_automation,DailyGbProcessCatOrd,DeltaPercent,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu,pct_photon,pct_streaming,DLTPercent,ServerlessSqlPercent):
     if n_clicks == 0:
         return ""
     else:
+        children = []
         dollars = call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml/100,pct_de/100,pct_bi/100,pct_automation/100,DailyGbProcessCatOrd,DeltaPercent/100,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu/100,pct_photon/100,pct_streaming/100,DLTPercent/100,ServerlessSqlPercent/100)
-        return f"{max(200, round(dollars[0]/10)*10)} $ DBUs / month"
-@app.callback(
-      Output('dollars-interval-confidence', 'children'),
-      [
-        Input('prediction-button', 'n_clicks'),
-        State('cloudType', 'value'),
-        State('marketSegment', 'value'),
-        State('industryVertical', 'value'),
-        State('customerStatus', 'value'),
-        State('pct_ml', 'value'),
-        State('pct_de', 'value'),
-        State('pct_bi', 'value'),
-        State('pct_automation', 'value'),
-        State('DailyGbProcessCatOrd', 'value'),
-        State('DeltaPercent', 'value'),
-        State('nUsers', 'value'),
-        State('model_serving_bin', 'value'),
-        State('customerAgeQuarters', 'value'),
-        State('pct_gpu', 'value'),
-        State('pct_photon', 'value'),
-        State('pct_streaming', 'value'),
-        State('DLTPercent', 'value'),
-        State('ServerlessSqlPercent', 'value')
-      ]
-    )
-def predict_confidence_interval(n_clicks,cloudType,marketSegment,industryVertical,customerStatus,pct_ml,pct_de,pct_bi,pct_automation,DailyGbProcessCatOrd,DeltaPercent,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu,pct_photon,pct_streaming,DLTPercent,ServerlessSqlPercent):
-    if n_clicks == 0:
-        return ""
-    else:
-        dollars = call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml/100,pct_de/100,pct_bi/100,pct_automation/100,DailyGbProcessCatOrd,DeltaPercent/100,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu/100,pct_photon/100,pct_streaming/100,DLTPercent/100,ServerlessSqlPercent/100)
-        return f"90% confidence interval: [{max(0, round(dollars[1]/10)*10)}$ - {round(dollars[2]/10)*10}$]"
-@app.callback(
-      Output('salesforce-row', 'children'),
-      [
-        Input('prediction-button', 'n_clicks')
-      ]
-    )
-def activate_salesforce(n_clicks):
-    if n_clicks > 0:
-        time.sleep(3)
-        table_header = [html.Thead(html.Tr([html.Th("SKU"), html.Th("DBUs")]))]
+        
+        children.append(html.H3(f"{max(200, round(dollars[0]/10)*10)} $ DBUs / month",style={'text-align':'center'}))
+        
+        children.append(html.H6(f"90% confidence interval: [{max(0, round(dollars[1]/10)*10)}$ - {round(dollars[2]/10)*10}$]", style={'text-align':'center'}))
 
-        row1 = html.Tr([html.Td("Jobs Compute"), html.Td("100")])
-        row2 = html.Tr([html.Td("Delta Live Table"), html.Td("100")])
-        row3 = html.Tr([html.Td("SQL Compute"), html.Td("100")])
-        row4 = html.Tr([html.Td("All Purpose Compute"), html.Td("100")])
-        row5 = html.Tr([html.Td("Serverless SQL"), html.Td("100")])
-        row6 = html.Tr([html.Td("Model Serving"), html.Td("100")])
+        table_header = [
+          html.Thead(html.Tr([html.Th("SKU"), html.Th("DBUs")]))
+        ]
+
+        row1 = html.Tr([html.Td("Jobs Compute"), html.Td(100)])
+        row2 = html.Tr([html.Td("Delta Live Table"), html.Td(100)])
+        row3 = html.Tr([html.Td("SQL Compute"), html.Td(100)])
+        row4 = html.Tr([html.Td("All Purpose Compute"), html.Td(100)])
+        row5 = html.Tr([html.Td("Serverless SQL"), html.Td(100)])
+        row6 = html.Tr([html.Td("Model Serving"), html.Td(100)])
 
         table_body = [html.Tbody([row1, row2, row3, row4, row5, row6])]
-        return [
-            dbc.Button("Nice but what should I report into Salesforce now?", className="btn btn-light btn-sm", n_clicks=0, disabled=False, id="salesforce-button"),
-            dbc.Offcanvas(
-              dbc.Table(table_header + table_body, bordered=True),
-              id="offcanvas",
-              title="Title",
-              is_open=False,
+
+        table = dbc.Table(
+            # using the same table as in the above example
+            table_header + table_body,
+            color="light",
         ),
-        ]
+
+        children.append(dbc.Button("Nice but what should I report into Salesforce now?", style={'font-style': 'italic'},
+                                   className="btn btn-light", n_clicks=0, disabled=False, id="salesforce-btn"))
+        children.append(
+             dbc.Offcanvas(
+              children=table,
+              id="off-canvas",
+              title="DBUs / SKU",
+              is_open=False)
+        )   
+        return children
 
 @app.callback(
       Output('pct_de', 'invalid'),
@@ -425,11 +392,10 @@ def sum_is_100(pct_de, pct_ml, pct_bi):
         return False, False, False, False
     else:
         return True, True, True, True
-    
 @app.callback(
-    Output("offcanvas", "is_open"),
-    Input("salesforce-button", "n_clicks"),
-    [State("offcanvas", "is_open")],
+    Output("off-canvas", "is_open"),
+    Input("salesforce-btn", "n_clicks"),
+    [State("off-canvas", "is_open")],
 )
 def toggle_offcanvas(n1, is_open):
     if n1:
