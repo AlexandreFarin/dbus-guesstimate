@@ -1,7 +1,7 @@
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, Output, Input, State, dash_table
-from utils import get_dataset, call_models
+from utils import get_dataset, call_models, create_salesforce_table
 
 df = get_dataset("customers_last_month")
 df_dollars = get_dataset("workspaces_last_month")
@@ -52,7 +52,8 @@ app.layout = html.Div(
       className="d-grid gap-2 col-6 mx-auto"
     ),
     html.Br(),  
-    dbc.Row(id="predict-section", className="d-grid gap-2 col-4 mx-auto"),
+    dcc.Loading(id="predict-section", className="dbc", color="grey"),
+    html.Br(), 
     dbc.Row(
         [
           dbc.Col(
@@ -108,7 +109,7 @@ app.layout = html.Div(
               html.Div([
                   html.H4("Use Case", className="card-header"),
                   html.Div(
-                     html.H6("The thing on Salesforce", className="card-subtitle text-muted"),
+                     html.H6("The thing in Salesforce", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
                   html.Div(html.Img(src='assets/use-case.svg',style={'height':'40%', 'width':'40%'}),
@@ -341,35 +342,16 @@ def predict(n_clicks,cloudType,marketSegment,industryVertical,customerStatus,pct
     else:
         children = []
         dollars = call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml/100,pct_de/100,pct_bi/100,pct_automation/100,DailyGbProcessCatOrd,DeltaPercent/100,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu/100,pct_photon/100,pct_streaming/100,DLTPercent/100,ServerlessSqlPercent/100)
-        
-        children.append(html.H3(f"{max(200, round(dollars[0]/10)*10)} $ DBUs / month",style={'text-align':'center'}))
+        d = max(200, round(dollars[0]/10)*10)
+        children.append(html.H3(f"{d} $ DBUs / month",style={'text-align':'center'}))
         
         children.append(html.H6(f"90% confidence interval: [{max(0, round(dollars[1]/10)*10)}$ - {round(dollars[2]/10)*10}$]", style={'text-align':'center'}))
 
-        table_header = [
-          html.Thead(html.Tr([html.Th("SKU"), html.Th("DBUs")]))
-        ]
-
-        row1 = html.Tr([html.Td("Jobs Compute"), html.Td(100)])
-        row2 = html.Tr([html.Td("Delta Live Table"), html.Td(100)])
-        row3 = html.Tr([html.Td("SQL Compute"), html.Td(100)])
-        row4 = html.Tr([html.Td("All Purpose Compute"), html.Td(100)])
-        row5 = html.Tr([html.Td("Serverless SQL"), html.Td(100)])
-        row6 = html.Tr([html.Td("Model Serving"), html.Td(100)])
-
-        table_body = [html.Tbody([row1, row2, row3, row4, row5, row6])]
-
-        table = dbc.Table(
-            # using the same table as in the above example
-            table_header + table_body,
-            color="light",
-        ),
-
-        children.append(dbc.Button("Nice but what should I report into Salesforce now?", style={'font-style': 'italic'},
-                                   className="btn btn-light", n_clicks=0, disabled=False, id="salesforce-btn"))
+        children.append(dbc.Button("Nice but what should I report into Salesforce now?", style={'font-style': 'italic', 'text-align':'center'},
+                                   className="btn btn-light d-grid gap-2 col-6 mx-auto", n_clicks=0, disabled=False, id="salesforce-btn"))
         children.append(
              dbc.Offcanvas(
-              children=table,
+              children=create_salesforce_table(d,cloudType,pct_bi/100,ServerlessSqlPercent/100,pct_ml/100,model_serving_bin,pct_automation/100, pct_de/100, DLTPercent/100),
               id="off-canvas",
               title="DBUs / SKU",
               is_open=False)
