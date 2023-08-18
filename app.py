@@ -1,6 +1,5 @@
-import pandas as pd
 import dash_bootstrap_components as dbc
-from dash import Dash, html, dcc, Output, Input, State, dash_table
+from dash import Dash, html, dcc, Output, Input, State
 from utils import get_dataset, call_models, create_salesforce_table
 
 df = get_dataset("customers_last_month")
@@ -16,8 +15,9 @@ app.layout = html.Div(
     dbc.Row(
         [
           html.H4("Warning!", className="alert-heading"),
-          html.P("Work in progress, use it with a grain of salt. Feedbacks are welcome (alexandre.farin@databricks.com)."
-                 , className="mb-0") 
+          html.P("""Work in progress, use it with a grain of salt.
+                    Feedbacks are welcome (alexandre.farin@databricks.com)."""
+                 , className="mb-0")
         ],
         className="alert alert-dismissible alert-warning"
     ),
@@ -37,7 +37,8 @@ app.layout = html.Div(
     dbc.Row(
         dbc.Col(html.Figure([
             html.Blockquote(
-                html.P('The idea that the future is unpredictable is undermined everyday by the ease with which the past is explained.',
+                html.P("""The idea that the future is unpredictable is undermined
+                       everyday by the ease with which the past is explained.""",
                        className="mb-0"),
                 className="blockquote"
             ),
@@ -48,12 +49,13 @@ app.layout = html.Div(
       width={"size": 6, "offset": 3})
     ),
     dbc.Row(
-      dbc.Button("Predict", className="btn btn-danger", id="prediction-button", n_clicks=0, disabled=False),
+      dbc.Button("Predict", className="btn btn-danger", id="prediction-button",
+                 n_clicks=0, disabled=False),
       className="d-grid gap-2 col-6 mx-auto"
     ),
-    html.Br(),  
+    html.Br(),
     dcc.Loading(id="predict-section", className="dbc", color="grey"),
-    html.Br(), 
+    html.Br(),
     dbc.Row(
         [
           dbc.Col(
@@ -99,7 +101,9 @@ app.layout = html.Div(
                       html.Div(
                         [
                           html.P("Uses Databricks since . quarters"),
-                          dbc.Input(type="number", min=0, max=df_dollars["customerAgeQuarters"].max(), step=1, value=df_dollars["customerAgeQuarters"].median(), id="customerAgeQuarters", className="form-control"),
+                          dbc.Input(type="number", min=0, max=df_dollars["customerAgeQuarters"].max(),
+                                    step=1, value=df_dollars["customerAgeQuarters"].median(),
+                                    id="customerAgeQuarters", className="form-control"),
                         ],
                         className="mb-3")
                   ],style = {'margin-left':'5px', 'margin-top':'5px', 'margin-right':'5px'})
@@ -112,32 +116,38 @@ app.layout = html.Div(
                      html.H6("The thing in Salesforce", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/use-case.svg',style={'height':'40%', 'width':'40%'}),
+                  html.Div(html.Img(src='assets/use-case.svg',
+                                    style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
                       html.Div(
                         [
                           html.P("Number of users", id="user_title"),
                           dbc.Tooltip(
-                              "This include all users who write code: data engineers + data scientists + data analysts",
+                              """This include all users who write code: 
+                              data engineers + data scientists + data analysts""",
                               target="user_title",placement="top"
                           ),
-                          dbc.Input(type="number", min=0, max=df_dollars["nUsers"].max(), step=1, value=df_dollars["nUsers"].median(), id="nUsers", className="form-control"),
+                          dbc.Input(type="number", min=0, max=df_dollars["nUsers"].max(),
+                                    step=1, value=df_dollars["nUsers"].median(),
+                                    id="nUsers", className="form-control"),
                         ],
                         className="mb-3"),
                       html.Div(
                         [
                           html.P("Maturity", id="maturity_title"),
                           dbc.Tooltip(
-                              "If the use case is in an early stage, a lot of development on an interactive cluster, nothing run on a regular basis then move the knob towards POC.",
-                              target="maturity_title",placement="top"
-                          ),
-                          dcc.Slider(id="pct_automation", min=0, max=100, step=10, value=round(df_dollars["pct_automation"].median(),1) * 100, 
+                              """If the use case is in an early stage, a lot of development
+                              on an interactive cluster, nothing run on a regular basis
+                              then move the knob towards POC.""",
+                              target="maturity_title",placement="top"),
+                          dcc.Slider(id="pct_automation", min=0, max=100, step=10,
+                                     value=round(df_dollars["pct_automation"].median(),1) * 100,
                                      className="dbc",marks={
-                                          0: {'label': 'POC'},
-                                          100: {'label': 'PROD'}
+                                            0: {'label': 'POC'},
+                                            100: {'label': 'PROD'}
                                           },
-                                    ), 
+                                    ),
                         ],
                       className="mb-3"),
                       html.Div(
@@ -161,7 +171,8 @@ app.layout = html.Div(
                       html.Div(
                         [
                           html.P("Delta usage"),
-                          dcc.Slider(id="DeltaPercent", min=0, max=100, step=10, value=round(df_dollars["DeltaPercent"].median(),1) * 100, 
+                          dcc.Slider(id="DeltaPercent", min=0, max=100, step=10,
+                                     value=round(df_dollars["DeltaPercent"].median(),1) * 100,
                                      className="dbc", marks={
                                           0: {'label': '0%'},
                                           100: {'label': '100%'}
@@ -189,22 +200,25 @@ app.layout = html.Div(
                      html.H6("Bronze, Silver and Gold", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/data-eng.svg',style={'height':'40%', 'width':'40%'}),
+                  html.Div(html.Img(src='assets/data-eng.svg',
+                                    style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
                       html.Div(
                         [
                           html.P("ETL usage in %"),
-                          dbc.Input(type="number", min=0, max=100, step=1, value=70, id="pct_de", className="form-control", invalid=False),
+                          dbc.Input(type="number", min=0, max=100, step=1, value=70,
+                                    id="pct_de", className="form-control", invalid=False),
                         ],
                         className="mb-3"),
                       html.Div(
                         [
                           html.P("Photon usage in %"),
-                          dcc.Slider(id="pct_photon", min=0, max=100, step=10 , value=round(df_dollars["pct_photon"].mean(),1) * 100, 
+                          dcc.Slider(id="pct_photon", min=0, max=100, step=10,
+                                     value=round(df_dollars["pct_photon"].mean(),1) * 100,
                                      className="dbc", marks={
-                                          0: {'label': '0%'},
-                                          100: {'label': '100%'}
+                                            0: {'label': '0%'},
+                                            100: {'label': '100%'}
                                           }
                                     ),
                         ],
@@ -212,7 +226,7 @@ app.layout = html.Div(
                       html.Div(
                         [
                           html.P("Delta Live Table usage in %"),
-                          dcc.Slider(id="DLTPercent", min=0, max=100, step=10 , value=round(df_dollars["DLTPercent"].mean(),1) * 100, 
+                          dcc.Slider(id="DLTPercent", min=0, max=100, step=10, value=round(df_dollars["DLTPercent"].mean(),1) * 100, 
                                      className="dbc", marks={
                                           0: {'label': '0%'},
                                           100: {'label': '100%'}
@@ -223,10 +237,11 @@ app.layout = html.Div(
                       html.Div(
                         [
                           html.P("Streaming usage in %"),
-                          dcc.Slider(id="pct_streaming", min=0, max=100, step=10 , value=round(df_dollars["pct_streaming"].median(),1) * 100, 
+                          dcc.Slider(id="pct_streaming", min=0, max=100, step=10,
+                                     value=round(df_dollars["pct_streaming"].median(),1) * 100,
                                      className="dbc", marks={
-                                          0: {'label': '0%'},
-                                          100: {'label': '100%'}
+                                            0: {'label': '0%'},
+                                            100: {'label': '100%'}
                                           }
                                     ),
                         ],
@@ -238,25 +253,30 @@ app.layout = html.Div(
               html.Div([
                   html.H4("Data Science / ML", className="card-header"),
                   html.Div(
-                     html.H6("pip install sklearn, dolly, llm", className="card-subtitle text-muted"),
+                     html.H6("import sklearn, dolly, llm",
+                             className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/data-science.svg',style={'height':'40%', 'width':'40%'}),
+                  html.Div(html.Img(src='assets/data-science.svg',
+                                    style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
                     html.Div(
                         [
                           html.P("ML usage in %"),
-                          dbc.Input(type="number", min=0, max=100, step=1, value=10, id="pct_ml", className="form-control", invalid=False),
+                          dbc.Input(type="number", min=0, max=100, step=1,
+                                    value=10, id="pct_ml", className="form-control",
+                                    invalid=False),
                         ],
                         className="mb-3"),
                     html.Div(
                         [
                           html.P("Type of compute"),
-                          dcc.Slider(id="pct_gpu", min=0, max=100, step=10, value=round(df_dollars["pct_gpu"].mean(),1) * 100, 
+                          dcc.Slider(id="pct_gpu", min=0, max=100, step=10,
+                                     value=round(df_dollars["pct_gpu"].mean(),1) * 100,
                                      className="dbc", marks={
-                                          0: {'label': 'CPU'},
-                                          100: {'label': 'GPU'}
+                                            0: {'label': 'CPU'},
+                                            100: {'label': 'GPU'}
                                           }
                                      ),
                         ],
@@ -284,22 +304,26 @@ app.layout = html.Div(
                      html.H6("SELECT * FROM DATA+AI", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/data-analysis.svg',style={'height':'40%', 'width':'40%'}),
+                  html.Div(html.Img(src='assets/data-analysis.svg',
+                                    style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
                     html.Div(
                         [
                           html.P("SQL usage in %"),
-                          dbc.Input(type="number", min=0, max=100, step=1, value=20, id="pct_bi", className="form-control", invalid=False),
+                          dbc.Input(type="number", min=0, max=100, step=1,
+                                    value=20, id="pct_bi", className="form-control",
+                                    invalid=False),
                         ],
                       className="mb-3"),
                     html.Div(
                         [
                           html.P("Serverless usage in %"),
-                          dcc.Slider(id="ServerlessSqlPercent", min=0, max=100, step=10 , value=round(df_dollars["ServerlessSqlPercent"].mean(),1) * 100, 
+                          dcc.Slider(id="ServerlessSqlPercent", min=0, max=100, step=10,
+                                     value=round(df_dollars["ServerlessSqlPercent"].mean(),1) * 100,
                                      className="dbc", marks={
-                                          0: {'label': '0%'},
-                                          100: {'label': '100%'}
+                                            0: {'label': '0%'},
+                                            100: {'label': '100%'}
                                           }
                                     ),
                         ],
@@ -343,21 +367,22 @@ def predict(n_clicks,cloudType,marketSegment,industryVertical,customerStatus,pct
         children = []
         dollars = call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml/100,pct_de/100,pct_bi/100,pct_automation/100,DailyGbProcessCatOrd,DeltaPercent/100,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu/100,pct_photon/100,pct_streaming/100,DLTPercent/100,ServerlessSqlPercent/100)
         d = max(200, round(dollars[0]/10)*10)
-        children.append(html.H3(f"{d} $ DBUs / month",style={'text-align':'center'}))
+        children.append(html.H2(f"{d} $ DBUs / month",style={'text-align':'center'}))
         
-        children.append(html.H6(f"90% confidence interval: [{max(0, round(dollars[1]/10)*10)}$ - {round(dollars[2]/10)*10}$]", style={'text-align':'center'}))
+        children.append(html.H5(f"90% confidence interval: [{max(0, round(dollars[1]/10)*10)}$ - {round(dollars[2]/10)*10}$]", style={'text-align':'center'}))
 
-        children.append(dbc.Button("Nice but what should I report into Salesforce now?", style={'font-style': 'italic', 'text-align':'center'},
-                                   className="btn btn-light d-grid gap-2 col-6 mx-auto", n_clicks=0, disabled=False, id="salesforce-btn"))
+        children.append(dbc.Button("Nice, what should I report into Salesforce now? Click me!",
+                                   className="btn btn-light d-grid gap-2 col-6 mx-auto",
+                                   n_clicks=0, disabled=False, id="salesforce-btn"))
         children.append(
              dbc.Offcanvas(
-              children=create_salesforce_table(d,cloudType,pct_bi/100,ServerlessSqlPercent/100,pct_ml/100,model_serving_bin,pct_automation/100, pct_de/100, DLTPercent/100),
+              children=create_salesforce_table(d,cloudType,pct_bi/100,ServerlessSqlPercent/100,pct_ml/100,
+                                               model_serving_bin,pct_automation/100, pct_de/100, DLTPercent/100),
               id="off-canvas",
               title="DBUs / SKU",
               is_open=False)
-        )   
+        )
         return children
-
 @app.callback(
       Output('pct_de', 'invalid'),
       Output('pct_ml', 'invalid'),

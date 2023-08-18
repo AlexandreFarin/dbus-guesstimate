@@ -24,69 +24,6 @@ def get_dataset(table_name):
             columns = [desc[0] for desc in cursor.description] 
     return pd.DataFrame(result, columns=columns)
 
-def score_model(age, active_users, industry, etl_pct, data_volume, jobs, delta, ml_pct, model_serving, sql_pct, serverless):
-    headers = {
-       "Authorization": f'Bearer {os.getenv("token")}',
-       "Content-Type": "application/json",
-    }
-    input_data = {
-      "dataframe_split": {
-        "columns": [
-          "pct_eda",
-          "pct_etl",
-          "pct_edw",
-          "pct_jobs",
-          "DailyGbProcessCatOrd",
-          "DeltaPercent",
-          "activeUsers",
-          "ServerlessSqlPercent",
-          "ModelServing",
-          "Industry",
-          "customerAgeMonths"
-        ],
-        "data": [
-          [
-            ml_pct,
-            etl_pct,
-            sql_pct,
-            jobs,
-            data_volume,
-            delta,
-            active_users,
-            serverless,
-            model_serving,
-            industry,
-            age
-          ]
-        ]
-      }
-    }
-    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/Guestimator/invocations'
-    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
-    
-    if response.status_code != 200:
-        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
-    
-    dbus = response.json()["predictions"][0]
-
-    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/GuestimatorMinimum/invocations'
-    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
-    
-    if response.status_code != 200:
-        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
-    
-    dbus_min = response.json()["predictions"][0]
-
-    model_uri=f'https://{os.getenv("db_host")}/serving-endpoints/GuestimatorMaximum/invocations'
-    response = requests.post(headers=headers, url=model_uri, json=input_data, timeout=200)
-    
-    if response.status_code != 200:
-        raise Exception(f"Request failed with status {response.status_code}, {response.text}")
-    
-    dbus_max = response.json()["predictions"][0]
-
-    return (int(dbus),int(dbus_min),int(dbus_max))
-
 def call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml,pct_de,pct_bi,pct_automation,DailyGbProcessCatOrd,DeltaPercent,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu,pct_photon,pct_streaming,DLTPercent,ServerlessSqlPercent):
     headers = {
        "Authorization": f'Bearer {os.getenv("token")}',
@@ -199,13 +136,12 @@ def create_salesforce_table(dollars,cloudType,pct_bi,ServerlessSqlPercent,pct_ml
     table_header = [
       html.Thead(html.Tr([html.Th("SKU"), html.Th("DBUs")]))
     ]
-
-    row1 = html.Tr([html.Td("Jobs Compute"), html.Td(int(jobs_dbus))])
-    row2 = html.Tr([html.Td("Delta Live Table"), html.Td(int(dlt_dbus))])
-    row3 = html.Tr([html.Td("SQL Compute"), html.Td(int(bi_dbus_classic))])
-    row4 = html.Tr([html.Td("All Purpose Compute"), html.Td(int(interactive_dbus))])
-    row5 = html.Tr([html.Td("Serverless SQL"), html.Td(int(bi_dbus_serverless))])
-    row6 = html.Tr([html.Td("Model Serving"), html.Td(int(model_serving_dbus))])
+    row1 = html.Tr([html.Td("Jobs Compute"), html.Td(int((jobs_dbus+50)/100)*100)])
+    row2 = html.Tr([html.Td("Delta Live Table"), html.Td(int((dlt_dbus+50)/100)*100)])
+    row3 = html.Tr([html.Td("SQL Compute"), html.Td(int((bi_dbus_classic+50)/100)*100)])
+    row4 = html.Tr([html.Td("All Purpose Compute"), html.Td(int((interactive_dbus+50)/100)*100)])
+    row5 = html.Tr([html.Td("Serverless SQL"), html.Td(int((bi_dbus_serverless+50)/100)*100)])
+    row6 = html.Tr([html.Td("Model Serving"), html.Td(int((model_serving_dbus+50)/100)*100)])
 
     table_body = [html.Tbody([row1, row2, row3, row4, row5, row6])]
 
