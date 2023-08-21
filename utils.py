@@ -1,16 +1,10 @@
 import os
-import sys
 import requests
 import pandas as pd
 from databricks import sql
-from pathlib import Path
 from dotenv import load_dotenv
 from dash import html
 import dash_bootstrap_components as dbc
-
-
-path_root = Path(__file__).parents[1]
-sys.path.append(str(path_root))
 
 load_dotenv()
 
@@ -103,15 +97,33 @@ def call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml,p
 
 
 def create_salesforce_table(dollars,cloudType,pct_bi,ServerlessSqlPercent,pct_ml,model_serving_bin,pct_automation, pct_de, DLTPercent):
-    price = {
-        "Jobs Compute": 0.13,
-        "Delta Live Table": 0.32,
-        "SQL Compute": 0.18,
-        "All Purpose Compute": 0.42,
-        "Serverless SQL": 0.52,
-        "Model Serving": 0.07
-    }
-
+    if cloudType=="aws":
+        price = {
+            "Jobs Compute": 0.15,
+            "Delta Live Table": 0.25,
+            "SQL Compute": 0.18,
+            "All Purpose Compute": 0.555,
+            "Serverless SQL": 0.52,
+            "Model Serving": 0.07
+        }
+    elif cloudType=="azure":
+        price = {
+              "Jobs Compute": 0.30,
+              "Delta Live Table": 0.38,
+              "SQL Compute": 0.55,
+              "All Purpose Compute": 0.55,
+              "Serverless SQL": 0.70,
+              "Model Serving": 0.07
+          }
+    else:
+        price = {
+              "Jobs Compute": 0.15,
+              "Delta Live Table": 0.25,
+              "SQL Compute": 0.55,
+              "All Purpose Compute": 0.55,
+              "Serverless SQL": 0.70,
+              "Model Serving": 0.07
+          }
     bi_dollars = dollars * pct_bi
     bi_dbus = bi_dollars / (price["SQL Compute"]*(1-ServerlessSqlPercent)+price["Serverless SQL"]*(ServerlessSqlPercent))
     bi_dbus_serverless = bi_dbus * ServerlessSqlPercent

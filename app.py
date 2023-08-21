@@ -1,14 +1,15 @@
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, Output, Input, State
-from utils import get_dataset, call_models, create_salesforce_table
+import utils
 
-df = get_dataset("customers_last_month")
-df_dollars = get_dataset("workspaces_last_month")
-
+df = utils.get_dataset("customers_last_month")
+df_dollars = utils.get_dataset("workspaces_last_month")
+img_path="https://github.com/AlexandreFarin/dbus-guesstimate/blob/main/assets/"
 DBC_CSS = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
 app = Dash(
    external_stylesheets=[dbc.themes.LUX, DBC_CSS]
 )
+server = app.server
 app.config.suppress_callback_exceptions=True
 app.layout = html.Div(
   [
@@ -24,7 +25,7 @@ app.layout = html.Div(
     dbc.Row(
         [
           dbc.Col(
-            html.Img(src='assets/databricks-logo.jpeg',className="img-fluid",
+            html.Img(src=f'{img_path}databricks-logo.jpeg?raw=true',className="img-fluid",
                      style={'height':'30%', 'width':'30%'}),
             width="2", align="center"
           ),
@@ -65,7 +66,7 @@ app.layout = html.Div(
                      html.H6("The one we are obessed about", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/company.svg',style={'height':'40%', 'width':'40%'}),
+                  html.Div(html.Img(src=f'{img_path}company.svg?raw=true',style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
                       html.Div(
@@ -83,7 +84,7 @@ app.layout = html.Div(
                           html.P("Status"),
                           dbc.Select(
                           id="customerStatus", value=df_dollars["customerStatus"].mode()[0],
-                          options=[{"value":v, "label":v} for v in df_dollars['customerStatus'].unique()]
+                          options=[{"value":v, "label":v} for v in df_dollars['customerStatus'].unique() if v is not None]
                         ),
                         ],
                         className="mb-3"
@@ -93,7 +94,7 @@ app.layout = html.Div(
                           html.P("Market Segment"),
                           dbc.Select(
                           id="marketSegment", value=df_dollars["marketSegment"].mode()[0],
-                          options=[{"value":v, "label":v} for v in df_dollars['marketSegment'].unique()]
+                          options=[{"value":v, "label":v} for v in df_dollars['marketSegment'].unique() if v is not None]
                         ),
                         ],
                         className="mb-3"
@@ -116,7 +117,7 @@ app.layout = html.Div(
                      html.H6("The thing in Salesforce", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/use-case.svg',
+                  html.Div(html.Img(src=f'{img_path}use-case.svg?raw=true',
                                     style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
@@ -200,7 +201,7 @@ app.layout = html.Div(
                      html.H6("Bronze, Silver and Gold", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/data-eng.svg',
+                  html.Div(html.Img(src=f'{img_path}data-eng.svg?raw=true',
                                     style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
@@ -257,7 +258,7 @@ app.layout = html.Div(
                              className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/data-science.svg',
+                  html.Div(html.Img(src=f'{img_path}data-science.svg?raw=true',
                                     style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
@@ -271,12 +272,17 @@ app.layout = html.Div(
                         className="mb-3"),
                     html.Div(
                         [
-                          html.P("Type of compute"),
+                          html.P("Type of use case", id="use_case_type"),
+                          dbc.Tooltip(
+                              """If your customer is using traditional machine learning techniques 
+                              (linear regression, decision tree,...) move the cursor to the left (ML).
+                              If the techniques are more advanced (LLM, Gen AI, ...) move it to the right.""",
+                              target="use_case_type",placement="top"),
                           dcc.Slider(id="pct_gpu", min=0, max=100, step=10,
                                      value=round(df_dollars["pct_gpu"].mean(),1) * 100,
                                      className="dbc", marks={
-                                            0: {'label': 'CPU'},
-                                            100: {'label': 'GPU'}
+                                            0: {'label': 'ML'},
+                                            100: {'label': 'AI'}
                                           }
                                      ),
                         ],
@@ -304,7 +310,7 @@ app.layout = html.Div(
                      html.H6("SELECT * FROM DATA+AI", className="card-subtitle text-muted"),
                      className="card-body"
                   ),
-                  html.Div(html.Img(src='assets/data-analysis.svg',
+                  html.Div(html.Img(src=f'{img_path}data-analysis.svg?raw=true',
                                     style={'height':'40%', 'width':'40%'}),
                            style={'textAlign': 'center'}),
                   dbc.Form([
@@ -365,7 +371,7 @@ def predict(n_clicks,cloudType,marketSegment,industryVertical,customerStatus,pct
         return ""
     else:
         children = []
-        dollars = call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml/100,pct_de/100,pct_bi/100,pct_automation/100,DailyGbProcessCatOrd,DeltaPercent/100,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu/100,pct_photon/100,pct_streaming/100,DLTPercent/100,ServerlessSqlPercent/100)
+        dollars = utils.call_models(cloudType,marketSegment,industryVertical,customerStatus,pct_ml/100,pct_de/100,pct_bi/100,pct_automation/100,DailyGbProcessCatOrd,DeltaPercent/100,nUsers,model_serving_bin,customerAgeQuarters,pct_gpu/100,pct_photon/100,pct_streaming/100,DLTPercent/100,ServerlessSqlPercent/100)
         d = max(200, round(dollars[0]/10)*10)
         children.append(html.H2(f"{d} $ DBUs / month",style={'text-align':'center'}))
         
@@ -376,7 +382,7 @@ def predict(n_clicks,cloudType,marketSegment,industryVertical,customerStatus,pct
                                    n_clicks=0, disabled=False, id="salesforce-btn"))
         children.append(
              dbc.Offcanvas(
-              children=create_salesforce_table(d,cloudType,pct_bi/100,ServerlessSqlPercent/100,pct_ml/100,
+              children=utils.create_salesforce_table(d,cloudType,pct_bi/100,ServerlessSqlPercent/100,pct_ml/100,
                                                model_serving_bin,pct_automation/100, pct_de/100, DLTPercent/100),
               id="off-canvas",
               title="DBUs / SKU",
@@ -410,4 +416,4 @@ def toggle_offcanvas(n1, is_open):
     return is_open
 
 if __name__=='__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, host="0.0.0.0", port=8080)
